@@ -13,12 +13,12 @@ pacman::p_load(tidyverse,
 
 
 # Cargar datos ------------------------------------------------------------
-casen = read_feather("casen_2020_edit.feather")
+casen = read_feather("data/casen_2020_edit.feather")
 
-demon <- read_csv("demon_slayer.csv") %>% 
+demon <- read_csv("data/demon_slayer.csv") %>% 
   janitor::clean_names()
 
-categorias <- read_csv("categorias_imc.csv")
+categorias <- read_csv("data/categorias_imc.csv")
 
 # rowwise() ---------------------------------------------------------------
 
