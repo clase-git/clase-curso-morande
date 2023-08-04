@@ -167,3 +167,7 @@ plot_table(table, region, n, "Total del ingreso por región")'
 # • Everything that happens is a function call."
 # 
 # — John Chambers
+
+
+
+prueba
