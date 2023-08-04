@@ -49,9 +49,5 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-<<<<<<< HEAD
 # Ignorar datos
 data
-=======
-*/data
->>>>>>> 27858837a6b80ebcc220e23b02435541073aca77
