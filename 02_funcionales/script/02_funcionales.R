@@ -3,9 +3,9 @@
 # -------------------------------------------------------------------------
 
 # 00. Carga de paquetes ---------------------------------------------------
-librerias <- c("tidyverse", "gapminder", "rlang", "feather")
+librerias <- c("tidyverse", "gapminder", "rlang", "feather", "guaguas")
 
-carga_librerias <- function(librerias = librerias) {
+carga_librerias <- function(librerias) {
   for (i in librerias) {
     esta_disponible <- require(i, character.only = TRUE, quietly= TRUE)
     if(esta_disponible){
@@ -17,6 +17,7 @@ carga_librerias <- function(librerias = librerias) {
     }
   }
 
+carga_librerias(librerias = librerias)
 
 # 01. Cargar datos --------------------------------------------------------
 
@@ -169,5 +170,163 @@ plot_table(table, region, n, "Total del ingreso por región")'
 # — John Chambers
 
 
+# 02. Usar función como parámetro -----------------------------------------
 
-prueba
+randomise <- function(f) f(runif(10))
+randomise(mean)
+randomise(sum)
+randomise(median)
+
+
+# 03. Loops con purrr -----------------------------------------------------
+
+cuadrado <- function(x) x ** 2
+
+map(1:3, cuadrado)
+
+
+# 04. Sabemos lo que entra y sale -----------------------------------------
+
+triple_chr <- function(x) as.character(x * 3)
+
+# Error
+map_int(1:3, triple_chr)
+
+map_chr(1:3, triple_chr)
+
+# 05. Trabajo con listas --------------------------------------------------
+
+lista_vectores <- list(1:3, 1:10, 2:9, 1)
+map_dbl(lista_vectores, mean)
+
+# ¿Qué pasa si queremos usar otros parámetros?
+lista_vectores <- list(1:3, c(1:10, NA))
+map_dbl(lista_vectores, ~mean(.x, na.rm = TRUE))
+
+# A la izquierda va el parámetro que varía y a la derecha el fijo.
+lista_funciones <- list(mean, min, max)
+map(lista_funciones, ~.x(100:150))
+
+
+# 06. Uso de map2 ---------------------------------------------------------
+
+media_sumar <- function(vector, valor) {
+  mean(vector) + valor
+}
+
+lista_vectores <- list(1:3, 1:5, 2:5)
+valores <- c(2, 3, 8)
+
+map2_dbl(lista_vectores, valores, media_sumar)
+
+
+# EJERCICIO 2 -------------------------------------------------------------
+
+'Tenemos una lista muy larga de elementos con nombres inscritos en el registro civil'
+
+lista_anios <- split(guaguas::guaguas, ~anio)
+names(lista_anios)[1:5]
+
+'Vamos a imaginar que cada elemento ocupa mucha memoria, por lo que deben ser procesados en secuencia'
+'La idea es calcular la suma de nombres (variable n) para cada año, filtrando por una variable que puede ser hombre o mujer'
+set.seed(2023)
+filtro <-  map_chr(1:length(lista_anios), ~sample(x = c("F", "M"), size = 1))
+filtro[1:5]
+
+
+# Solucion ----------------------------------------------------------------
+
+
+'...'
+
+# Funciones adicionales del paquete purrr ---------------------------------
+
+# 01. Necesito iterar sobre 3 o más input vectores ------------------------
+
+media_sumar_dividir <- function(vector, valor_suma, valor_division) {
+  (mean(vector) + valor_suma) / valor_division
+}
+lista_vectores <- list(1:3, 1:5, 2:5)
+valores_suma <- c(2, 3, 8)
+valores_division <- c(2, 1, 9)
+
+pmap_dbl(list(lista_vectores, valores_suma, valores_division), media_sumar_dividir)
+
+
+
+# 02. A veces interesando los efectos colaterales ------------------------
+
+animales <- c("perro", "gato", "elefante")
+map(animales, print)
+
+# el output de map es siempre una lista, todo lo demás es colateral. Walk nos entrega el efecto colateral
+walk(animales, print)
+
+
+# 03. Usos de walk --------------------------------------------------------
+
+continentes <- split(gapminder, gapminder$continent)
+
+library(feather)
+files <- paste0("data/", names(continentes), ".feather")
+walk2(continentes, files, write_feather)
+
+
+# 04. Iteración sobre los nombres de una lista ----------------------------
+
+files <- list.files("02_funcionales/data/datos_ene/", full.names = T)
+trimestres <- list.files("02_funcionales/data/datos_ene/") %>% 
+  str_extract(pattern = "-[[:digit:]]{2}-") %>% 
+  str_remove_all("-")
+
+varios_ene <- map(files, read_csv2, guess_max = 80000)
+names(varios_ene) <-  paste0("trimestre_", trimestres)  
+nombres_lista <-  imap(varios_ene, ~.y)
+nombres_lista 
+
+
+
+list.files("02_funcionales/data/datos_ene/", full.names = T) %>% 
+  set_names(paste0("trimestre_", str_extract(., "(?<=-)[[:digit:]]{2}(?=-)"))) %>% 
+  imap(~read_csv2(.x, guess_max = 80000) %>% 
+         mutate(trimestre = .y)) 
+
+
+# 05. Ejemplo uso de imap -------------------------------------------------
+
+# Error
+ocupados <- imap(varios_ene, .f = ~mutate(., .y = if_else(activ == 1, 1, 0) ))
+ocupados[[1]] %>% count(trimestre_01)
+
+# Solucion
+
+
+# EJERCICIO 3 -------------------------------------------------------------
+
+'Tenemos un listado de dataframes separados por año'
+
+gapminder_list <- split(gapminder, gapminder$year)
+
+'Retomemos nuestras funciones sum_something y plot_table.'
+'La idea es usar purrr con el listado que tenemos y generar un gráfico para cada año en el que se muestre la población de cada continente.'
+
+sum_something <- function(data, group_var, var) {
+  data %>% 
+    group_by(!!enexpr(group_var)) %>% 
+    summarise(n = sum(!!enexpr(var)))
+}
+
+plot_table <- function(table, x_var, y_var,  input_title ) {
+  ggplot(table, aes(x = !!enexpr(x_var), y = !!enexpr(y_var) )) +
+    geom_bar(stat = "identity") +
+    labs(title = input_title)
+}
+
+plots_by_year <- gapminder_list %>% 
+  map(~sum_something(.x, continent, pop)) %>% 
+  walk(~plot_table(.x, continent, n, "Población mundial, según continente" ) %>%  print)
+
+
+plots_by_year <- gapminder_list %>% 
+  map(sum_something, continent, pop) %>% 
+  map(plot_table, continent, n, "Población mundial, según continente" )
