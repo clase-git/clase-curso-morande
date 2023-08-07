@@ -53,4 +53,4 @@ rsconnect/
 data
 
 # Ignora carpetas personales
-carpetas_personales
+carpetas_personales/*
