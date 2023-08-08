@@ -21,7 +21,7 @@ carga_librerias(librerias = librerias)
 
 # 01. Cargar datos --------------------------------------------------------
 
-casen <- read_feather("02_funcionales/data/casen_2020_edit.feather")
+casen <- read_feather("01_funciones/data/casen_2020_edit.feather")
 
 # 02. Ejemplo con ERROR --------------------------------------------------
 
@@ -42,7 +42,7 @@ calcular_cosas(gapminder, pop)
 calcular_cosas <- function(data, var) {
   enquo_var <- enexpr(var)
   data %>% 
-    summarise(min = min(!!enquo_var),
+    summarise(min = min(!!enexpr(var)),
               max = max(!!enquo_var),
               mean = mean(!!enquo_var),
               median = median(!!enquo_var)
@@ -58,6 +58,7 @@ expr(x + y)
 # muy literal
 devolver_expresion <- function(x) {
   expr(x)}
+
 devolver_expresion(a + b)
 
 # Ahora si funciona
@@ -86,6 +87,7 @@ calcular_cosas <- function(data, var) {
   data %>% 
     summarise(var = min(!!enquo_var))
 }
+
 calcular_cosas(gapminder, pop)
 
 # Idea 2 (error)
@@ -98,9 +100,8 @@ calcular_cosas(gapminder, pop)
 
 # Se resuleve con un nuevo operador
 calcular_cosas <- function(data, var) {
-  enquo_var <- enexpr(var) 
   data %>% 
-    summarise(!!enquo_var := min(!!enquo_var))}
+    summarise({{var}} := min({{var}}))}
 calcular_cosas(gapminder, pop)
 
 
@@ -109,17 +110,16 @@ calcular_cosas(gapminder, pop)
 calcular_cosas <- function(data, var) {
   enquo_var <- sym(var)
   data %>% 
-    summarise(!!enquo_var  := min(!!enquo_var))}
+    summarise(!!sym(var)  := min(!!sym(var)))}
 calcular_cosas(gapminder, "pop")
 
 #Otra opción con rlang
 calcular_cosas <- function(data, var) {
-  enquo_var <- parse_expr(var)
+  enquo_var <- rlang::parse_expr(var)
   data %>% 
     summarise(!!enquo_var  := min(!!enquo_var))
 }
 calcular_cosas(gapminder, "pop")
-
 
 # 08. Uso del nuevo operador {{}} -----------------------------------------
 
@@ -144,8 +144,33 @@ Por ejemplo, sum_something(casen, region, ytotcor) debería devolver lo siguient
 
 # Solucion
 
-'...'
+casen %>% 
+  group_by(region)
 
+
+sum_something <- function(datos, grupo, variable){
+  datos %>% 
+    group_by(!!enexpr(grupo)) %>% 
+    summarise(!!enexpr(variable) := sum(!!enexpr(variable)))
+}
+
+sum_something <- function(datos, grupo, variable){
+  datos %>% 
+    group_by({{grupo}}) %>% 
+    summarise({{variable}} := sum({{variable}}))
+}
+
+sum_something(casen, region, ytotcor)
+
+sum_something <- function(datos, grupo, variable){
+  variable <- paste0(variable, "_suma")
+  
+  datos %>% 
+    group_by(!!sym(grupo)) %>% 
+    summarise(!!sym(variable) := sum(!!sym(variable)))
+}
+
+sum_something(casen, "region", "ytotcor")
 
 # Parte II
 'Crea una función plot_table que acompañe a sum_something. plot_table debe recibir la tabla creada por sum_something y
@@ -155,9 +180,37 @@ plot_table(table, region, n, "Total del ingreso por región")'
 
 
 
-'...'
+tabla_region <- sum_something(casen, region, ytotcor)
 
+tabla_region %>% 
+  ggplot(aes(x = region, y = ytotcor)) +
+  geom_col() +
+  labs(title = "Total del ingreso por región")
 
+plot_table <- function(table, x, y, titulo){
+  
+  table %>% 
+    ggplot(aes(x = {{x}}, y = {{y}})) +
+    geom_col() +
+    ggtitle(titulo)
+  
+}
+
+plot_table(tabla_region, region, ytotcor, "Total del ingreso por región")
+
+# Pequeño anexo de mensajes con rlang
+message("hola")
+stop("hola")
+warning("advertencia")
+
+rlang::inform(c(i = "informacion", x = "Error", v = "Ticket"))
+rlang::abort(c(i = "informacion", x = "Error", v = "Ticket"))
+rlang::warn(c(i = "informacion", x = "Error", v = "Ticket"))
+
+# Ejemplo de flujo
+# if(nrow(base) > 1000){
+#   rlang::abort(c(i = "informacion", x = "Error", v = "Ticket"))
+# }
 
 # 01. Introducción a funcionales ------------------------------------------
 
@@ -182,6 +235,10 @@ randomise(median)
 
 cuadrado <- function(x) x ** 2
 
+cuadrado(1)
+cuadrado(2)
+cuadrado(3)
+
 map(1:3, cuadrado)
 
 
@@ -199,13 +256,40 @@ map_chr(1:3, triple_chr)
 lista_vectores <- list(1:3, 1:10, 2:9, 1)
 map_dbl(lista_vectores, mean)
 
+
+
 # ¿Qué pasa si queremos usar otros parámetros?
 lista_vectores <- list(1:3, c(1:10, NA))
 map_dbl(lista_vectores, ~mean(.x, na.rm = TRUE))
 
+
+
+
+
 # A la izquierda va el parámetro que varía y a la derecha el fijo.
+100:150 %>% mean
+100:150 %>% min
+100:150 %>% max
+
+
+
 lista_funciones <- list(mean, min, max)
-map(lista_funciones, ~.x(100:150))
+map(lista_funciones, ~.x(100:150, na.rm = TRUE))
+
+
+casen$ytrabajocor
+casen$yaimcorh
+
+map(c("yaimcorh", "ytrabajocor"), 
+    ~casen %>% 
+      summarise(!!sym(.x) := mean(!!sym(.x), na.rm = TRUE)))
+
+# data.frames como listas
+
+typeof(mtcars)
+
+map(mtcars, mean)
+
 
 
 # 06. Uso de map2 ---------------------------------------------------------
@@ -224,7 +308,7 @@ map2_dbl(lista_vectores, valores, media_sumar)
 
 'Tenemos una lista muy larga de elementos con nombres inscritos en el registro civil'
 
-lista_anios <- split(guaguas::guaguas, ~anio)
+lista_anios <- split(guaguas, guaguas$anio)
 names(lista_anios)[1:5]
 
 'Vamos a imaginar que cada elemento ocupa mucha memoria, por lo que deben ser procesados en secuencia'
@@ -233,6 +317,29 @@ set.seed(2023)
 filtro <-  map_chr(1:length(lista_anios), ~sample(x = c("F", "M"), size = 1))
 filtro[1:5]
 
+
+lista_anios[[1]] %>% 
+  filter(sexo == "F") %>% 
+  summarise(n = sum(n))
+tabla_region %>% pull(ytotcor)
+
+sumar_n <- function(x,y){
+  x %>% 
+    filter(sexo == y) %>% 
+    summarise(n = sum(n)) %>% 
+    pull(n)
+}
+
+map2(lista_anios, filtro, sumar_n)
+
+sumar_n <- as_mapper(~ .x %>% 
+                       filter(sexo == .y) %>% 
+                       summarise(n = sum(n)) %>% 
+                       pull(n))
+
+map2_dbl(lista_anios, filtro, sumar_n)
+
+map2_dbl(lista_anios, filtro, sumar_n)
 
 # Solucion ----------------------------------------------------------------
 
@@ -268,7 +375,7 @@ walk(animales, print)
 continentes <- split(gapminder, gapminder$continent)
 
 library(feather)
-files <- paste0("data/", names(continentes), ".feather")
+files <- paste0("02_funcionales/data/", names(continentes), ".feather")
 walk2(continentes, files, write_feather)
 
 
@@ -279,11 +386,15 @@ trimestres <- list.files("02_funcionales/data/datos_ene/") %>%
   str_extract(pattern = "-[[:digit:]]{2}-") %>% 
   str_remove_all("-")
 
-varios_ene <- map(files, read_csv2, guess_max = 80000)
-names(varios_ene) <-  paste0("trimestre_", trimestres)  
+varios_ene <- map(files, ~read_csv2(.x, guess_max = 80000))
+names(varios_ene) <- paste0("trimestre_", trimestres)  
 nombres_lista <-  imap(varios_ene, ~.y)
 nombres_lista 
 
+
+imap(varios_ene, ~.x %>% 
+       mutate(trimestre = .y) %>%
+       select(1:3, trimestre))
 
 
 list.files("02_funcionales/data/datos_ene/", full.names = T) %>% 
@@ -295,7 +406,9 @@ list.files("02_funcionales/data/datos_ene/", full.names = T) %>%
 # 05. Ejemplo uso de imap -------------------------------------------------
 
 # Error
-ocupados <- imap(varios_ene, .f = ~mutate(., .y = if_else(activ == 1, 1, 0) ))
+ocupados <- imap(varios_ene,
+                 .f = ~.x %>% 
+                   mutate({{.y}} := if_else(activ == 1, 1, 0) ))
 ocupados[[1]] %>% count(trimestre_01)
 
 # Solucion
