@@ -1,1 +1,59 @@
+# Ejercicio número 1:
+
+coeficiente_variacion <- function(vector, remove_na = TRUE) {
+  if (remove_na) {
+    vector <- vector[!is.na(vector)]
+  }
+  
+  media <- mean(vector)
+  desviacion_estandar <- sd(vector)
+  coef_variacion <- desviacion_estandar / media
+  
+  return(coef_variacion)
+}
+
+## Ejemplo:
+
+my_vector <- c(10, 20, 15, NA, 25, 30, NA, 22, 18, 37)
+
+
+coef_variacion <- coeficiente_variacion(my_vector)
+print(coef_variacion)
+
+
+# Ejercicio número 2:
+
+build_adress <- function(calle, numero, depto){
+  nombre_calle <- gsub('calle ' , '',
+                       gsub('av. ', '', calle))
+  
+  numero_calle <- gsub("num ", "",
+                       gsub("número ", "", numero))
+  
+  numero_depto <- gsub("depto. ", "",
+                       gsub("departamento ", "", depto))
+  
+  numero_depto <- sub("NULL", NA, numero_depto)
+  
+  print(paste0(nombre_calle," ", numero_calle, ifelse(is.na(numero_depto),"", paste(", depto.", numero_depto))) ) 
+  
+}
+
+# Aplicacion ejercicio 3
+
+df <- tribble(~calle,              ~numero,        ~depto,
+              "calle Hemingway",    "num 345",      "depto.345",  
+              "av. Albert Camus",   "número 123",   "123",
+              "Manuel Rojas",       "234",          "departamento 231",
+              "Nicanor Parra",      "678",          NULL
+)
+
+df
+
+# construcción de la nueva variable a partir de la función del ejercicio 2:
+df <- df %>%
+  rowwise() %>%
+  mutate(adress = build_adress(calle, numero, depto))
+
+
 
