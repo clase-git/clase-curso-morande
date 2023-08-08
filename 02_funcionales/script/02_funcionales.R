@@ -321,12 +321,3 @@ plot_table <- function(table, x_var, y_var,  input_title ) {
     geom_bar(stat = "identity") +
     labs(title = input_title)
 }
-
-plots_by_year <- gapminder_list %>% 
-  map(~sum_something(.x, continent, pop)) %>% 
-  walk(~plot_table(.x, continent, n, "Población mundial, según continente" ) %>%  print)
-
-
-plots_by_year <- gapminder_list %>% 
-  map(sum_something, continent, pop) %>% 
-  map(plot_table, continent, n, "Población mundial, según continente" )
