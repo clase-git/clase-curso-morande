@@ -19,9 +19,6 @@ vector_prueba <- c(101, NA, 105, 110, 103)
 vector_p2 <- c(100, 100, 100)
 
 
-get_cv(vector_prueba)
-
-
 ## Ejercicio 2:
 
 # Crea una función llamada build_address que construya una dirección en base a algunos inputs, siguiendo un formato establecido. build_address recibe 2 parámetros obligatorios y uno opcional.
