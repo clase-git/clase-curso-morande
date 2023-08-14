@@ -5,6 +5,7 @@
 # Session Data files
 .RData
 .RDataTmp
+.Rproj
 
 # User-specific files
 .Ruserdata
@@ -48,3 +49,9 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Ignorar datos
+data
+
+# Ignora carpetas personales
+carpetas_personales/*
