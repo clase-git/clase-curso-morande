@@ -42,7 +42,7 @@ plot_table <- function(table, x_var, y_var,  input_title ) {
 plot_with_purr <- function(tablas){
   plots <- tablas %>%
     imap(~sum_something(.x, continent, pop)) %>% 
-    imap(~plot_table(.x, continent, n, paste("Poblacion mundial, segun continente. A?o", names(tablas[.y]))))
+    imap(~plot_table(.x, continent, n, paste("Poblacion mundial, segun continente. Año", names(tablas[.y]))))
   return(plots)
 }
 
@@ -60,7 +60,7 @@ plot_table <- function(table, x_var, y_var,  input_title, input_subtitle ) {
 plot_with_purr2 <- function(tablas){
   plots <- tablas %>%
     imap(~sum_something(.x, continent, pop)) %>% 
-    imap(~plot_table(.x, continent, n, "Poblacion mundial, segun continente", paste("A?o",names(tablas[.y]))))
+    imap(~plot_table(.x, continent, n, "Poblacion mundial, segun continente", paste("Año",names(tablas[.y]))))
   return(plots)
 }
 
