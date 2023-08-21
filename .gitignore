@@ -21,6 +21,7 @@
 
 # RStudio files
 .Rproj.user/
+.Rproj
 
 # produced vignettes
 vignettes/*.html
@@ -53,4 +54,4 @@ rsconnect/
 data
 
 # Ignora carpetas personales
-carpetas_personales
+carpetas_personales/*

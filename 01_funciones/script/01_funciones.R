@@ -201,7 +201,7 @@ wrapper <- function() {
   return(environment(sumar_xy))  
 }
 
-wrapper
+wrapper()
 
 z <- 3
 crear_z <- function() {
@@ -278,6 +278,11 @@ sumar_xyz(1, 2, 0.4)
 
 
 # Ejercicio funciones 1 (diapo 32) -----------------------------------------------------
+
+get_imc <- function(weight_kg,height_cm){
+  imc <- weight_kg/(height_cm/100)**2
+  return(imc)
+}
 
 get_imc <- function(weight, height) {
   imc <- weight /(height / 100) **2
@@ -415,7 +420,7 @@ identity <- function(x) {x}
 
 sum_something(10, log10)
 
-sum_something(10, power2)
+sum_something(4, power2)
 
 
 # Fábrica de funciones ----------------------------------------------------
