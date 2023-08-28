@@ -1,0 +1,130 @@
+---
+title: "Reporte ENE"
+output: html_document
+date: '2023-08-24'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r librerias, message=FALSE, warning=FALSE, include=FALSE}
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(purrr)
+library(data.table)
+```
+
+## Analizar las principales tasas que se publican con esta encuesta
+
+La idea es que comiencen a trabajar desde un documento en **Rmarkdown**, puede ser **HTML** o **Word**, para al final de la clase poder ver los resultados en un reporte.
+
+Se puede trabajar en pareja!
+
+**Trabajaremos con datos de la ENE**
+
+### Paso 1: Abrir todos los archivos .csv
+
+```{r Cargar datos, include=FALSE}
+
+```
+
+
+### Paso 2: función para crear variables de interés
+
+La variables deben ser las siguientes:
+
+- Población en edad de trabaja -> pet = edad >= 15
+- Fuerza de trabajo = fdt -> cae_especifico >= 1 & cae_especifico <= 9
+- Ocupados -> cae_especifico >= 1 & cae_especifico <= 7
+- Desocupados -> cae_especifico >= 8 & cae_especifico <= 9
+
+Recomendación:
+
+- Primero generar las variables de interés, luego aplicar la ponderación
+- Es importante considerar que estas variables deben estar ponderabas por el factor de expansión para obtener los datos a nivel poblacional (ocupados*fact_cal)
+- Para lograr lo anterior es necesaria una función que multiplique cualquier variable por el factor de expansión, utilizando lazy_eval
+
+```{r variables interes, echo=TRUE}
+
+```
+
+```{r aplica funcion, include=FALSE}
+ene <- map(ene,f_variables_interes)
+# sum(ene$a2023_05_amj$fdt*ene$a2023_05_amj$fact_cal)
+```
+
+Función para ponderación, calcular por factor de expansión
+
+```{r funcion ponderar, include=FALSE}
+ponderar = function(var,fact){
+  {{var}}*{{fact}}
+  }
+```
+
+Ahora necesitamos calcular la ponderación por todas nuestras variables de interés
+seleccionamos solamente variables de interés
+
+```{r seleccion variables, include=FALSE}
+variables = c("sexo","hogar","region","provincia","sector","fact_cal","agno","trimestre","fdt","ocupados","desocupados","pet","ocupados_exp","desocupados_exp",
+  "pet_exp","fdt_exp","agno","trimestre")
+
+
+```
+
+Ahora calcularemos las principales tasas publicadas. Las variables a utilizar son:
+
+- Personas desocupadas = `desocupados_exp`
+- Personas ocupadas = `ocupados_exp`
+- Fuerza de trabajo = `fdt`
+- Población en edad de trabajar = `pet_exp`
+
+Formulas:
+
+1. Tasa desocupación Corresponde al número de personas desocupadas, expresado como porcentaje de la fuerza de trabajo (entendida como la sumatoria de personas ocupadas y desocupadas).
+
+<p style="text-align: center"> $TD = [DO/FDT]*100$ </p>
+
+Donde: $DO$ = Personas desocupadas $FT$ = Fuerza de trabajo
+
+2. Tasa ocupación Corresponde al número de personas ocupadas como porcentaje de la población en edad de trabajar (es decir, de quince años o más).
+
+<p style="text-align: center"> $TO = [O/PET]*100$ </p>
+
+Donde: $DO$ = Personas ocupadas $PET$ = Población en edad de trabajar
+
+1. Tasa participación Corresponde al número de personas en la fuerza de trabajo expresado como porcentaje de la población en edad de trabajar.
+
+<p style="text-align: center"> $TP = [FDT/PET]*100$ </p>
+
+Donde, $FT$ = Fuerza de trabajo $PET$ = Población en edad de trabajar
+
+- Calcule una tabla con las 3 tasas para todos los trimestres
+- Calcule una tabla donde podamos ver la región con mayor tasa de desempleo por trimestre con purrr
+- Calcule la misma tabla con data.table y compare resultados con alguno de los siguientes paquetes aquí
+
+Sería buena idea apilar las tablas de la lista con dplyr::bind_rows()
+
+```{r pasar a df, echo=TRUE}
+ene_df <- ene %>% 
+  bind_rows()
+```
+
+
+```{r calculo tasas, echo=FALSE}
+
+```
+
+#### Calcule una tabla donde podamos ver la regiones con mayor tasa de desempleo por trimestre con purrr
+
+```{r tabla con purrr, echo=TRUE}
+
+```
+
+#### Calcule la misma tabla con data.table y compare resultados
+
+```{r tabla con data.table, echo=TRUE}
+
+```
+
