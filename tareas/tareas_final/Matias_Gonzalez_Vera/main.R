@@ -69,14 +69,15 @@ tabla_3
 
 ## Tabla 4: Descripción de los ingresos del trabajo principal por versión
 tabla_4 <- map(bases_esi_r, ~select(.x, idrph, fact_cal_esi, version, ing_t_p) %>%
-                   mutate(ing_t_p = ifelse(ing_t_p == 0, NA, ing_t_p)) %>%      # valores 0 se convierten en perdidos
-                   mutate(min = min(ing_t_p, na.rm = T), 
-                          max = max(ing_t_p, na.rm = T), 
-                          media = mean(ing_t_p, na.rm = T), 
-                          mediana = median(ing_t_p, na.rm = T), 
-                          p10 = quantile(ing_t_p, 0.1, na.rm = T), 
-                          p90 = quantile(ing_t_p, 0.9, na.rm = T)) %>%
-                   distinct(version, min, max, media, mediana, p10, p90)) %>% 
+                 mutate(ing_t_p = ifelse(ing_t_p == 0, NA, ing_t_p)) %>%      # valores 0 se convierten en perdidos
+                 mutate(ing_exp = ing_t_p*fact_cal_esi) %>% 
+                 mutate(min = min(ing_exp, na.rm = T), 
+                        max = max(ing_exp, na.rm = T), 
+                        media = mean(ing_exp, na.rm = T), 
+                        mediana = median(ing_exp, na.rm = T), 
+                        p10 = quantile(ing_exp, 0.1, na.rm = T), 
+                        p90 = quantile(ing_exp, 0.9, na.rm = T)) %>%
+                 distinct(version, min, max, media, mediana, p10, p90)) %>% 
   bind_rows()
 tabla_4
 
