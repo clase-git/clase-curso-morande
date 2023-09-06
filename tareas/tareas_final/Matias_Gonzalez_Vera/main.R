@@ -12,6 +12,8 @@ urls <- c("https://www.ine.cl/docs/default-source/encuesta-suplementaria-de-ingr
           "https://www.ine.cl/docs/default-source/encuesta-suplementaria-de-ingresos/bbdd/csv_esi/2016/esi-2016---personas.csv?sfvrsn=81beb5a_6&download=true"
 )
 
+source("functions.R")
+
 # Extracción de nombres de archivo y alojar en objeto "nombres"
 nombres <- extract_name(urls)
 
