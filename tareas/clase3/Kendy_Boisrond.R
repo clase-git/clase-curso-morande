@@ -1,8 +1,7 @@
-# Trabajo Final de Kendy B
+# Trabajo Final
 
 # EJERCICIO 1:
 
-## Cargar paquetes necesarios
 
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse,
@@ -148,13 +147,6 @@ strategy_4 <- function(data_esi) {
 }
 tictoc::toc()
 
-# CONCLUSIONES A TRAVÉS DE TICTOC:
-## Utilizando el paquete tictoc para decidir sobre la eficiencia, llegamos a la conclusión que 
-## las estrategias lista de tablas con purr (1) y lista de tabla con "data.table"(3) son aquellas 
-## que demoraron menos tiempo (alrededr de 0 secundo), por lo tanto mucho más eficiente que las 
-## estratgias 2 y 4 cuyo resultados son de 0,01 y 0,02 secundo, respectivamente. Finalmente, yo 
-## aconsejaría a mi jefatura desde ese enfoque, utilizar lista de tabla con purr o lista de tabla 
-## con data.table de forma indiferente, por encima de las demás estrategias. 
 
 # Primera forma con microbenhcmark:
 
@@ -182,5 +174,12 @@ benchmark_result_2 <- microbenchmark(
 # Imprimir el resultado del benchmark
 print(benchmark_result_2)
 
-# CONCLUSIONES: En ambos casos, no me resultaron por tema de formato de algunas variables y/o
-# dimensiones entre ellas. Por lo tanto me quedé con la conclusión que llegamos anteriormente.
+# CONCLUSIONES A TRAVÉS DE TICTOC:
+## Utilizando el paquete tictoc para decidir sobre la eficiencia, llegamos a la conclusión que 
+## las estrategias lista de tablas con purr (1) y lista de tabla con "data.table"(3) son aquellas 
+## que demoraron menos tiempo (alrededr de 0 secundo), por lo tanto mucho más eficiente que las 
+## estratgias 2 y 4 cuyo resultados son de 0.01 y 0.02 segundo, respectivamente. Finalmente, los 
+## no me es posible determinar la eficiencia con el enfoque de benchmark por errores de formato... 
+## Por lo tanto, aconsejaría a mi jefatura desde el enfoque tictoc, utilizar lista de tabla con purr
+## o lista de tabla con data.table de forma indiferente, por encima de las demás estrategias. 
+
