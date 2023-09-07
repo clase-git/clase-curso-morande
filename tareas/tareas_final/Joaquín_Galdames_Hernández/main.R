@@ -5,6 +5,9 @@
 #Encargado: Joaquín E Galdames Hernández - Analista Socioeconómico
 #*************************************************************************************************************************************************************
 
+
+
+
 # 1. Cargar paquetes ------------------------
 if (!require("pacman")) install.packages("pacman")  #si falta pacman, instalar
 
@@ -17,6 +20,7 @@ pacman::p_load(
   microbenchmark,
   data.table,
   rlang
+
 )
 
 ##Eliminar notación científica
@@ -38,12 +42,15 @@ urls <- c("https://www.ine.cl/docs/default-source/encuesta-suplementaria-de-ingr
 walk(urls, ~ download_esi_data(.x, "data", extract_name(.x)))
 
 
+
 ### Ejercicio 2: leer archivos-------
 
 esi <- map(file.path("data",list.files(path = "data/")), ~ read_esi_data(.x)) 
 
 ### creo un vector para ponerle los nombres
+
 nombres <- str_extract(list.files(path = "data/"), pattern = "esi-\\d{4}") %>% str_replace("-","_")
+
 
 ### pongo nombres al objeto dentro de la lista
 esi <- esi %>% set_names(nombres)
@@ -51,6 +58,7 @@ esi <- esi %>% set_names(nombres)
 remove(nombres)
 
 ### Ejercicio 3: obtener datos-------
+
 
 # Tabla que contenga 3 columnas: version, n_personas (idrph) y n_hogares (id_identificacion). 
 # En la columna version debes usar la siguiente estructura: esi_{año}. Ejemplo: esi_2017
@@ -111,3 +119,5 @@ microbenchmark(
 
 ###Parece que siempre es mejor usar la base de datos tal cual :o
 #### Díganle a Agustín que me debe un pasaje 
+
+
