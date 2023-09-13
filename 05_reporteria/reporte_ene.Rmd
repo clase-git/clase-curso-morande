@@ -1,0 +1,183 @@
+---
+title: "Reporte ENE"
+output: html_document
+date: '2023-08-24'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r librerias, message=FALSE, warning=FALSE, include=FALSE}
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(purrr)
+library(data.table)
+```
+
+## Analizar las principales tasas que se publican con esta encuesta
+
+La idea es que comiencen a trabajar desde un documento en **Rmarkdown**, puede ser **HTML** o **Word**, para al final de la clase poder ver los resultados en un reporte.
+
+Se puede trabajar en pareja!
+
+**Trabajaremos con datos de la ENE**
+
+### Paso 1: Abrir todos los archivos .csv
+
+```{r Cargar datos, include=FALSE}
+files <- list.files("05_reporteria/data/", full.names = T)
+nombres <- str_extract_all(files,"(2022|2023)-(\\d{2})-[a-zA-Z]{3}") %>%
+  str_replace_all("-","_") %>% 
+  paste0("a", .)
+agno <- str_extract_all(nombres,"2022|2023") %>% unlist()
+trimestre <- str_extract_all(nombres,"(2022|2023)_(\\d{2})_[a-zA-Z]{3}") %>% str_replace_all("-","_") %>% str_remove_all("2022_|2023_")
+
+ene <- files %>% 
+  map(read.csv2, .progress = TRUE)
+
+ene <- map2(ene,agno,~mutate(.x,agno = .y))
+ene <- map2(ene,trimestre,~mutate(.x,trimestre = .y))
+
+```
+
+```{r alternativa a cargar datos, eval=FALSE, include=FALSE}
+# ene <- files %>% 
+#   set_names(nombres) %>% 
+#   imap(~read.csv2(.x) %>% 
+#          mutate(agno = str_extract(.y, "202[23]"),
+#                 trimestre = str_extract(.y, "\\d{2}-[a-z]{3}")))
+
+# Versiones alternativas
+# files %>% 
+#   map_dfr(~tibble(anio = str_extract(.x, "202[23](?=-\\d{2})"),
+#                   trimestre = str_extract(.x, "(?<=202[23]-)\\d{2}-[a-z]{3}") %>% str_replace_all("-","_")))
+# 
+# files %>% 
+#   map_dfr(~tibble(anio = str_extract(.x, "202[23](?=-\\d{2})"),
+#                   trimestre = str_replace(.x, ".*(?<=202[23]-)(\\d{2})-([a-z]{3}).*", replacement = "\\1_\\2")))
+```
+
+
+### Paso 2: función para crear variables de interés
+
+La variables deben ser las siguientes:
+
+- Población en edad de trabaja -> pet = edad >= 15
+- Fuerza de trabajo = fdt -> cae_especifico >= 1 & cae_especifico <= 9
+- Ocupados -> cae_especifico >= 1 & cae_especifico <= 7
+- Desocupados -> cae_especifico >= 8 & cae_especifico <= 9
+
+Recomendación:
+
+- Primero generar las variables de interés, luego aplicar la ponderación
+- Es importante considerar que estas variables deben estar ponderabas por el factor de expansión para obtener los datos a nivel poblacional (ocupados*fact_cal)
+- Para lograr lo anterior es necesaria una función que multiplique cualquier variable por el factor de expansión, utilizando lazy_eval
+
+```{r variables interes, echo=TRUE}
+f_variables_interes = function(datos){
+  datos %>%
+    mutate(pet = if_else(edad >= 15 ,1,0),
+           fdt = if_else(cae_especifico >= 1 & cae_especifico <= 9, 1, 0), # fuerza de trabajo
+           ocupados = if_else(cae_especifico >= 1 & cae_especifico <= 7, 1, 0), # persona ocupada
+           desocupados = if_else(cae_especifico >= 8 & cae_especifico <= 9, 1, 0)) # personas desocupadas 
+}
+```
+
+```{r include=FALSE}
+ene <- map(ene,f_variables_interes)
+# sum(ene$a2023_05_amj$fdt*ene$a2023_05_amj$fact_cal)
+```
+
+Función para ponderación, calcular por factor de expansión
+
+```{r funcion ponderar, include=FALSE}
+ponderar = function(var,fact){
+  {{var}}*{{fact}}
+  }
+```
+
+Ahora necesitamos calcular la ponderación por todas nuestras variables de interés
+seleccionamos solamente variables de interés
+
+```{r seleccion variables, include=FALSE}
+variables = c("sexo","hogar","region","provincia","sector","fact_cal","agno","trimestre","fdt","ocupados","desocupados","pet","ocupados_exp","desocupados_exp",
+  "pet_exp","fdt_exp","agno","trimestre")
+
+ene <- map(ene, ~mutate(.x,across(c(ocupados, desocupados, pet, fdt),
+                                  list(exp = ~ ponderar(., fact_cal)))) %>% 
+                select(all_of(variables)))
+```
+
+Ahora calcularemos las principales tasas publicadas. Las variables a utilizar son:
+
+- Personas desocupadas = `desocupados_exp`
+- Personas ocupadas = `ocupados_exp`
+- Fuerza de trabajo = `fdt`
+- Población en edad de trabajar = `pet_exp`
+
+Formulas:
+
+1. Tasa desocupación Corresponde al número de personas desocupadas, expresado como porcentaje de la fuerza de trabajo (entendida como la sumatoria de personas ocupadas y desocupadas).
+
+<p style="text-align: center"> $TD = [DO/FDT]*100$ </p>
+
+Donde: $DO$ = Personas desocupadas $FT$ = Fuerza de trabajo
+
+2. Tasa ocupación Corresponde al número de personas ocupadas como porcentaje de la población en edad de trabajar (es decir, de quince años o más).
+
+<p style="text-align: center"> $TO = [O/PET]*100$ </p>
+
+Donde: $DO$ = Personas ocupadas $PET$ = Población en edad de trabajar
+
+1. Tasa participación Corresponde al número de personas en la fuerza de trabajo expresado como porcentaje de la población en edad de trabajar.
+
+<p style="text-align: center"> $TP = [FDT/PET]*100$ </p>
+
+Donde, $FT$ = Fuerza de trabajo $PET$ = Población en edad de trabajar
+
+- Calcule una tabla con las 3 tasas para todos los trimestres
+- Calcule una tabla donde podamos ver la región con mayor tasa de desempleo por trimestre con purrr
+- Calcule la misma tabla con data.table y compare resultados con alguno de los siguientes paquetes aquí
+
+Sería buena idea apilar las tablas de la lista con dplyr::bind_rows()
+
+```{r pasar a df, echo=TRUE}
+ene_df <- ene %>% 
+  bind_rows()
+```
+
+
+```{r calculo tasas, echo=FALSE}
+ene_df %>% 
+  group_by(agno, trimestre) %>% 
+  summarise(tasa_desocupacion = sum(desocupados_exp)/sum(fdt)*100,
+            tasa_ocupacion = sum(ocupados_exp)/sum(pet_exp)*100,
+            tasa_participacion = sum(fdt)/sum(pet_exp)*100, .groups = "drop")
+```
+
+#### Calcule una tabla donde podamos ver la regiones con mayor tasa de desempleo por trimestre con purrr
+
+```{r tabla con purrr, echo=TRUE}
+tictoc::tic()
+ene_df %>% 
+  group_by(agno, trimestre, region) %>% 
+  summarise(tasa_desocupacion = sum(desocupados_exp)/sum(pet_exp)*100, .groups = "drop") %>% 
+  group_by(trimestre) %>% 
+  arrange(-tasa_desocupacion) %>% 
+  slice(1)
+tictoc::toc()
+```
+
+#### Calcule la misma tabla con data.table y compare resultados
+
+```{r tabla con data.table, echo=TRUE}
+ene_dt <- as.data.table(ene_df)
+tictoc::tic()
+ene_dt[,tasa_desocupacion := sum(desocupados_exp)/sum(pet_exp)*100, by = .(agno, trimestre, region)
+       ][,.SD[which.max(tasa_desocupacion)], by = trimestre
+         ][,c("agno", "trimestre", "region", "tasa_desocupacion")]
+tictoc::toc()
+```
+
